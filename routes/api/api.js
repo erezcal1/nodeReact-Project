@@ -10,4 +10,12 @@ router.get("/animals", (req, res) => {
   res.json(["cat", "dog", "bird", "fish", "snake"]);
 });
 
+router.get("/user", (req, res) => {
+  res.json({
+    name: "John",
+    age: 30,
+    hobbies: ["sports", "movies", "music"],
+  });
+});
+
 module.exports = router;
