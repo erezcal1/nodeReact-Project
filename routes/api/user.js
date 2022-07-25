@@ -11,7 +11,7 @@ router.get("/", (req, res) => {
     hobbies: ["sports", "movies", "music"],
   });
 });
-
+// http://localhost:3001/api/user/get-all-users
 router.get("/get-all-users", (req, res) => {
   res.json(dataArr);
 });
