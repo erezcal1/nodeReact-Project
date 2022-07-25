@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const usersRouter = require("./user");
 
 // http://localhost:3001/api/
 router.get("/", (req, res) => {
@@ -9,13 +10,6 @@ router.get("/", (req, res) => {
 router.get("/animals", (req, res) => {
   res.json(["cat", "dog", "bird", "fish", "snake"]);
 });
-
-router.get("/user", (req, res) => {
-  res.json({
-    name: "John",
-    age: 30,
-    hobbies: ["sports", "movies", "music"],
-  });
-});
+router.use("/user", usersRouter);
 
 module.exports = router;
