@@ -2,17 +2,22 @@ const express = require("express");
 const router = express.Router();
 const UserModule = require("../../models/users.model");
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", (req, res) => {
   try {
-    const user = await UserModule.insertUser(
-      "kenny",
-      "mc",
-      "kenny@hllo.com",
-      "123",
-      "050"
-    );
-    console.log("user", user);
-  } catch (err) {}
+  } catch (e) {}
 });
+
+// router.post("/signup", async (req, res) => {
+//   try {
+//     const user = await UserModule.insertUser(
+//       "kenny",
+//       "mc",
+//       "kenny@hllo.com",
+//       "123",
+//       "050"
+//     );
+//     console.log("user", user);
+//   } catch (err) {}
+// });
 
 module.exports = router;
