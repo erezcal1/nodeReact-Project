@@ -27,17 +27,4 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// router.post("/signup", async (req, res) => {
-//   try {
-//     const user = await UserModule.insertUser(
-//       "kenny",
-//       "mc",
-//       "kenny@hllo.com",
-//       "123",
-//       "050"
-//     );
-//     console.log("user", user);
-//   } catch (err) {}
-// });
-
 module.exports = router;
