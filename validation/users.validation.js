@@ -34,7 +34,7 @@ const signUpSchema = Joi.object({
   ...phoneRole,
 });
 
-const validateSignUpSchema = (signUpSchema, data) => {
+const validateSignUpSchema = (data) => {
   return signUpSchema.validateAsync(data, { abortEarly: false });
 };
 

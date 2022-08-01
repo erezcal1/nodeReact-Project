@@ -1,10 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const UserModule = require("../../models/users.model");
+const usersModule = require("../../models/users.model");
+const usersValidation = require("../../validation/users.validation");
 
-router.post("/signup", (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
-  } catch (e) {}
+    const validatedValue = await usersValidation.validateSignUpSchema(req.body);
+    console.log("validate", validatedValue);
+    const usersData = await usersModule.selectUserByEmail(validatedValue.email);
+    if (usersData.length > 0) {
+      throw { status: "failed", msg: "email already exist" };
+    }
+    res.json(usersData);
+  } catch (e) {
+    console.log("error", e);
+    res.json(e);
+  }
 });
 
 // router.post("/signup", async (req, res) => {
