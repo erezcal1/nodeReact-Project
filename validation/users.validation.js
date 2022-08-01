@@ -34,10 +34,19 @@ const signUpSchema = Joi.object({
   ...phoneRole,
 });
 
+const signInSchema = Joi.object({
+  ...emailRole,
+  ...passwordRole,
+});
+
 const validateSignUpSchema = (data) => {
   return signUpSchema.validateAsync(data, { abortEarly: false });
+};
+const validateSignInSchema = (data) => {
+  return signInSchema.validateAsync(data, { abortEarly: false });
 };
 
 module.exports = {
   validateSignUpSchema,
+  validateSignInSchema,
 };
