@@ -78,12 +78,12 @@ router.post("/forgetPassword", async (req, res) => {
       subject: "your recovery email",
       html: `
         <h1>Your recovery Link</h1>
-        <a href="http://localhost:${process.env.PORT}/api/recover-password/${secretKey}">Recovery Link</a>
+        <a href="${urlSecretKey}">Recovery Link</a>
       `,
     });
     res.json(new CustomRes(CustomRes.STATUSES.ok, "Email sent"));
   } catch (e) {
-    console.log(e);
+    res.json(e);
   }
 });
 router.get("/recover-password/:secretKey", (req, res) => {});
