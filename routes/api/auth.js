@@ -65,8 +65,12 @@ router.post("/forgetPassword", async (req, res) => {
     const secretKey = generateRandomAlphaNumStr(4);
     const urlSecretKey = `http://localhost:${process.env.PORT}/api/recover-password/${secretKey}`;
     // Date works with ms /1800000ms= 60s*30m*1000ms
-    const expDate = new Date(Date.now()+1800000)
-    await usersModule.updateRecovery(validateForgetPassword.email, secretKey - )
+    const expDate = new Date(Date.now() + 1800000);
+    await usersModule.updateRecovery(
+      validateForgetPassword.email,
+      secretKey,
+      expDate
+    );
   } catch (e) {
     console.log(e);
   }
@@ -74,3 +78,30 @@ router.post("/forgetPassword", async (req, res) => {
 router.get("/recover-password/:secretKey", (req, res) => {});
 router.post("/recover-password/:secretKey", (req, res) => {});
 module.exports = router;
+
+/*
+create google mail sending reset password
+create google mail
+go to google developer console
+create new project
+consent{
+create new OAUTH place
+external
+scope - nothing
+test-users : emails for testing
+at the end back to dashboard
+}
+create credential Oauth client ID {
+application type: web applications
+web application name
+Authorized URI: https://developers.google.com/oauthplaygorund/
+}
+need to save two keys in ENV: client ID, client secret
+
+goto Oauth playground
+settings: put the keys 
+add gmail api
+adn click continue
+exchange authorization code for tokens
+save refresh token (only allows for 1 hour)
+*/
