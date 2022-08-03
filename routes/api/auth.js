@@ -4,6 +4,7 @@ const usersModule = require("../../models/users.model");
 const usersValidation = require("../../validation/users.validation");
 const bcrypt = require("../../config/bcrypt");
 const CustomRes = require("../../classes/CustomErr");
+const jwt = require("../../config/jwt");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -46,7 +47,8 @@ router.post("/signIn", async (req, res) => {
         CustomRes.STATUSES.failed,
         "Invalid Email or Password"
       );
-    // throw { status: "failed", msg: "Invalid Email or Password" };
+    let token = await jwt.generateToken({ email: usersData[0].email });
+    res.json(new CustomRes(CustomRes.STATUSES.ok, token));
   } catch (e) {
     console.log(e);
   }
