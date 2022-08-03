@@ -5,6 +5,7 @@ const usersValidation = require("../../validation/users.validation");
 const bcrypt = require("../../config/bcrypt");
 const CustomRes = require("../../classes/CustomErr");
 const jwt = require("../../config/jwt");
+const generateRandomAlphaNumStr = require("../../utils/generateRandomAlphaNumStr");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -53,5 +54,23 @@ router.post("/signIn", async (req, res) => {
     console.log(e);
   }
 });
-
+router.post("/forgetPassword", async (req, res) => {
+  try {
+    const validateForgetPassword = await usersValidation.validateForgetPasswordSchema(
+      req.body
+    );
+    const usersData = await usersModule.selectUserByEmail(validateLogIn.email);
+    if (usersData.length <= 0)
+      throw new CustomRes(CustomRes.STATUSES.ok, "Email sent");
+    const secretKey = generateRandomAlphaNumStr(4);
+    const urlSecretKey = `http://localhost:${process.env.PORT}/api/recover-password/${secretKey}`;
+    // Date works with ms /1800000ms= 60s*30m*1000ms
+    const expDate = new Date(Date.now()+1800000)
+    await usersModule.updateRecovery(validateForgetPassword.email, secretKey - )
+  } catch (e) {
+    console.log(e);
+  }
+});
+router.get("/recover-password/:secretKey", (req, res) => {});
+router.post("/recover-password/:secretKey", (req, res) => {});
 module.exports = router;
