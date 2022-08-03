@@ -6,6 +6,7 @@ const bcrypt = require("../../config/bcrypt");
 const CustomRes = require("../../classes/CustomErr");
 const jwt = require("../../config/jwt");
 const generateRandomAlphaNumStr = require("../../utils/generateRandomAlphaNumStr");
+const sendEmail = require("../../config/mailer");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -71,6 +72,16 @@ router.post("/forgetPassword", async (req, res) => {
       secretKey,
       expDate
     );
+    sendEmail({
+      from: process.env.EMAIL_EMAIL,
+      to: process.env.EMAIL_EMAIL,
+      subject: "your recovery email",
+      html: `
+        <h1>Your recovery Link</h1>
+        <a href="http://localhost:${process.env.PORT}/api/recover-password/${secretKey}">Recovery Link</a>
+      `,
+    });
+    res.json(new CustomRes(CustomRes.STATUSES.ok, "Email sent"));
   } catch (e) {
     console.log(e);
   }
