@@ -57,6 +57,7 @@ router.post("/signIn", async (req, res) => {
 });
 router.post("/forgetPassword", async (req, res) => {
   try {
+    console.log("hello");
     const validateForgetPassword = await usersValidation.validateForgetPasswordSchema(
       req.body
     );
@@ -86,7 +87,6 @@ router.post("/forgetPassword", async (req, res) => {
     res.json(e);
   }
 });
-router.get("/recover-password/:secretKey", (req, res) => {});
 router.post("/recover-password/:secretKey", (req, res) => {});
 module.exports = router;
 
