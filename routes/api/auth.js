@@ -61,13 +61,16 @@ router.post("/forgetPassword", async (req, res) => {
     const validateForgetPassword = await usersValidation.validateForgetPasswordSchema(
       req.body
     );
-    const usersData = await usersModule.selectUserByEmail(validateLogIn.email);
+    const usersData = await usersModule.selectUserByEmail(
+      validateForgetPassword.email
+    );
     if (usersData.length <= 0)
       throw new CustomRes(CustomRes.STATUSES.ok, "Email sent");
     const secretKey = generateRandomAlphaNumStr(4);
-    const urlSecretKey = `http://localhost:${process.env.PORT}/api/recover-password/${secretKey}`;
+    const urlSecretKey = `http://localhost:3000/recover-password/${secretKey}/${validateForgetPassword.email}`;
     // Date works with ms /1800000ms= 60s*30m*1000ms
     const expDate = new Date(Date.now() + 1800000);
+
     await usersModule.updateRecovery(
       validateForgetPassword.email,
       secretKey,
@@ -84,10 +87,36 @@ router.post("/forgetPassword", async (req, res) => {
     });
     res.json(new CustomRes(CustomRes.STATUSES.ok, "Email sent"));
   } catch (e) {
+    console.log(e);
     res.json(e);
   }
 });
-router.post("/recover-password/:secretKey", (req, res) => {});
+router.post(
+  "/recover-password/:secretKey/:encryptedEmail",
+  async (req, res) => {
+    try {
+      const validatedRecoverPassword = await usersValidation.validateRecoveryPasswordSchema(
+        req.body
+      );
+      // decrypt Email - in the future
+      // decrypted Email validation
+      const usersData = await usersModule.selectUserByEmail(
+        req.params.encryptedEmail
+      );
+      if (usersData.length <= 0)
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+      if (usersData[0].recovery.secretKey === req.params.secretKey) {
+        const hashedPassword = await bcrypt.createHash(
+          validatedRecoverPassword.password
+        );
+        await usersModule.updatePassword(encryptedEmail, hashedPassword);
+        // TODO: check secretKey expDate, encrypt Email and decrypt email
+      }
+    } catch (err) {
+      res.json(err);
+    }
+  }
+);
 module.exports = router;
 
 /*
