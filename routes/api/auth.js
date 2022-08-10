@@ -7,6 +7,8 @@ const CustomRes = require("../../classes/CustomErr");
 const jwt = require("../../config/jwt");
 const generateRandomAlphaNumStr = require("../../utils/generateRandomAlphaNumStr");
 const sendEmail = require("../../config/mailer");
+const crypto = require("../../config/crypto");
+const { date } = require("joi");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -66,8 +68,9 @@ router.post("/forgetPassword", async (req, res) => {
     );
     if (usersData.length <= 0)
       throw new CustomRes(CustomRes.STATUSES.ok, "Email sent");
-    const secretKey = generateRandomAlphaNumStr(4);
-    const urlSecretKey = `http://localhost:3000/recover-password/${secretKey}/${validateForgetPassword.email}`;
+    const secretKey = generateRandomAlphaNumStr(8);
+    const encryptedData = crypto.encrypt(validateForgetPassword.email);
+    const urlSecretKey = `http://localhost:3000/recover-password/${secretKey}/${encryptedData.iv}/${encryptedData.encryptedData}`;
     // Date works with ms /1800000ms= 60s*30m*1000ms
     const expDate = new Date(Date.now() + 1800000);
 
@@ -91,8 +94,9 @@ router.post("/forgetPassword", async (req, res) => {
     res.json(e);
   }
 });
+
 router.post(
-  "/recover-password/:secretKey/:encryptedEmail",
+  "/recover-password/:secretKey/:iv/:encryptedData",
   async (req, res) => {
     try {
       const validatedRecoverPassword = await usersValidation.validateRecoveryPasswordSchema(
@@ -100,18 +104,32 @@ router.post(
       );
       // decrypt Email - in the future
       // decrypted Email validation
+      const decryptedEmail = crypto.decrypt({
+        iv: req.params.iv,
+        encryptedData: req.params.encryptedData,
+      });
+      const validateEmail = await usersValidation.validateRecoveryPassEmailCheckSchema(
+        { email: decryptedEmail }
+      );
       const usersData = await usersModule.selectUserByEmail(
-        req.params.encryptedEmail
+        validateEmail.email
       );
       if (usersData.length <= 0)
         throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
-      if (usersData[0].recovery.secretKey === req.params.secretKey) {
-        const hashedPassword = await bcrypt.createHash(
-          validatedRecoverPassword.password
-        );
-        await usersModule.updatePassword(encryptedEmail, hashedPassword);
-        // TODO: check secretKey expDate, encrypt Email and decrypt email
+
+      if (usersData[0].recovery.secretKey !== req.params.secretKey) {
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
       }
+      const dateNow = new Date();
+      if (dateNow.getTime() > usersData[0].recovery.dateRecovery.getTime())
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+
+      const hashedPassword = await bcrypt.createHash(
+        validatedRecoverPassword.password
+      );
+      await usersModule.updatePassword(validateEmail.email, hashedPassword);
+      res.json(new CustomRes(CustomRes.STATUSES.ok, "Password Changed"));
+      // TODO: check secretKey expDate, encrypt Email and decrypt email
     } catch (err) {
       res.json(err);
     }

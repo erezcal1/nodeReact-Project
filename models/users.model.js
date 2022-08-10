@@ -12,6 +12,8 @@ const userSchema = new Schema({
     secretKey: { type: String },
     dateRecovery: { type: Date },
   },
+  isAdmin: { type: Boolean, default: false },
+  isSuperAdmin: { type: Boolean, default: false },
 });
 
 // create collection
