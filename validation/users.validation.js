@@ -33,20 +33,16 @@ const signUpSchema = Joi.object({
   ...lastNameRole,
   ...phoneRole,
 });
-
 const signInSchema = Joi.object({
   ...emailRole,
   ...passwordRole,
 });
-
 const forgetPassSchema = Joi.object({
   ...emailRole,
 });
-
 const recoveryPassword = Joi.object({
   ...passwordRole,
 });
-
 const recoveryPassEmailCheckSchema = Joi.object({
   ...emailRole,
 });
