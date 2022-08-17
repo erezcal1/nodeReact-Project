@@ -1,5 +1,14 @@
 const express = require("express");
+const fs = require("fs").promises;
 const router = express.Router();
+const multer = require("../../config/multer");
+const uploadMulter = multer("uploads/", 300000, (req, file, cb) => {
+  const allowedFormat = ["image/jpeg", "image/png"];
+  cb(null, allowedFormat.includes(file.mimetype));
+});
+const animalsModel = require("../../models/animal.model");
+const animalsValidation = require("../../validation/animals.validation");
+const CustomRes = require("../../classes/CustomErr");
 
 let animalsArr = [
   {
@@ -48,10 +57,26 @@ router.get("/bigger-then-8", (req, res) => {
   } else res.json({ msg: "cant find old animals" });
 });
 // http://localhost:3001/api/animals/add-new-animal
-router.post("/add-new-animal", (req, res) => {
-  animalsArr = [...animalsArr, req.body];
-  res.json({ msg: "Animal added successfully" });
-});
+router.post(
+  "/add-new-animal",
+  uploadMulter.single("animalImage"),
+  async (req, res) => {
+    try {
+      const validateAnimal = await animalsValidation.validateNewAnimalSchema(
+        req.body
+      );
+      await animalsModel.insertAnimal(
+        validateAnimal.name,
+        validateAnimal.size,
+        req.file.filename
+      );
+      res.json(new CustomRes(CustomRes.STATUSES.ok, "new animal added"));
+    } catch (err) {
+      fs.unlink(req.file.path);
+      console.log(err);
+    }
+  }
+);
 
 router.patch("/edit-animal/", (req, res) => {
   let animal = animalsArr.find((item) => item._id === req.body._id);

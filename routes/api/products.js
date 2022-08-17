@@ -1,9 +1,13 @@
 const express = require("express");
+const fs = require("fs").promises;
 const router = express.Router();
 // const multer = require("multer");
 // const uploadMulter = multer({ dest: "uploads/" });
 const multer = require("../../config/multer");
-const uploadMulter = multer("uploads/", 300000);
+const uploadMulter = multer("uploads/", 300000, (req, file, cb) => {
+  const allowedFormat = ["image/jpeg", "image/png"];
+  cb(null, allowedFormat.includes(file.mimetype));
+});
 const productModel = require("../../models/products.model");
 const productValidation = require("../../validation/product.validation");
 const authMiddleware = require("../../middleware/auth.middleware");
@@ -41,6 +45,7 @@ router.post(
       );
       res.json(new CustomRes(CustomRes.STATUSES.ok, "new product added"));
     } catch (err) {
+      fs.unlink(req.file.path);
       res.status(401).json(err);
     }
   }

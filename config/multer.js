@@ -5,9 +5,8 @@ const multer = require("multer");
 //   storage: multerConfig,
 //   limits: { fileSize: 3000000 },
 // });
-module.exports = () => createMulter;
 
-const createMulter = (path, fileSize) => {
+const createMulter = (path, fileSize, allowedFormat) => {
   const multerConfig = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, "uploads/");
@@ -21,5 +20,8 @@ const createMulter = (path, fileSize) => {
   return multer({
     storage: multerConfig,
     limits: { fileSize: fileSize },
+    fileFilter: allowedFormat,
   });
 };
+
+module.exports = createMulter;
