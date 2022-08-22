@@ -1,4 +1,5 @@
 require("dotenv").config();
+const logger = require("../config/winstone");
 const app = require("../app");
 const debug = require("debug")("nodereact-project:server");
 const http = require("http");
@@ -16,9 +17,11 @@ connectToDB
     server.listen(port);
     server.on("error", onError);
     server.on("listening", onListening);
+    logger.info("connect to DB");
   })
   .catch((e) => {
-    console.log(e);
+    // console.log(e);
+    logger.fetal(`can't connect to DB ${e}`);
     process.exit(1);
   });
 
@@ -47,11 +50,13 @@ function onError(error) {
 
   switch (error.code) {
     case "EACCES":
-      console.error(bind + " requires elevated privileges");
+      // console.error(bind + " requires elevated privileges");
+      logger.fetal(bind + " requires elevated privileges");
       process.exit(1);
       break;
     case "EADDRINUSE":
-      console.error(bind + " is already in use");
+      // console.error(bind + " is already in use");
+      logger.fetal(bind + " requires elevated privileges");
       process.exit(1);
       break;
     default:
@@ -62,6 +67,7 @@ function onError(error) {
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-  console.log("Listening on " + chalk.bgBlue.bold(bind));
+  // console.log("Listening on " + chalk.bgBlue.bold(bind));
+  logger.info("Listening on " + bind);
   debug("Listening on " + bind);
 }

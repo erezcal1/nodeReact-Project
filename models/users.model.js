@@ -12,6 +12,11 @@ const userSchema = new Schema({
     secretKey: { type: String },
     dateRecovery: { type: Date },
   },
+  emailVerification: {
+    didHeDoIt: { type: Boolean, default: false },
+    websiteKey: { type: String },
+    emailDate: { type: Date },
+  },
   isSeller: { type: Boolean, default: false },
   isSuperAdmin: { type: Boolean, default: false },
 });
@@ -29,6 +34,16 @@ const insertUser = (firstName, lastName, email, password, phone) => {
     phone,
   });
   return user.save();
+};
+
+const updateEmail = (email, key, date) => {
+  return Users.updateOne(
+    { email },
+    { "emailVerification.websiteKey": key, "emailVerification.emailDate": date }
+  );
+};
+const updateHeDidIt = (email, didHe) => {
+  return Users.updateOne({ email }, { "emailVerification.didHeDoIt": didHe });
 };
 
 const updateRecovery = (email, key, date) => {
@@ -51,4 +66,6 @@ module.exports = {
   selectUserByEmail,
   updateRecovery,
   updatePassword,
+  updateEmail,
+  updateHeDidIt,
 };

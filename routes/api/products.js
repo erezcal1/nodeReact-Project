@@ -3,11 +3,14 @@ const fs = require("fs").promises;
 const router = express.Router();
 // const multer = require("multer");
 // const uploadMulter = multer({ dest: "uploads/" });
-const multer = require("../../config/multer");
-const uploadMulter = multer("uploads/", 300000, (req, file, cb) => {
-  const allowedFormat = ["image/jpeg", "image/png"];
-  cb(null, allowedFormat.includes(file.mimetype));
+const multer = require("../../config/multerTypes");
+const uploadImgMulter = multer.createMulter("uploads/", 3000000, {
+  type: multer.allowedTypes.img,
 });
+// const uploadCustomMulter = multer.createMulter("uploads/custom/", 3000000, {
+//   type: multer.allowedTypes.custom,
+//   customFormats: ["image/jpeg", "image/png"],
+// });
 const productModel = require("../../models/products.model");
 const productValidation = require("../../validation/product.validation");
 const authMiddleware = require("../../middleware/auth.middleware");
@@ -28,7 +31,7 @@ router.post(
   "/",
   authMiddleware,
   sellerMiddleware,
-  uploadMulter.single("productImage"),
+  uploadImgMulter.single("productImage"),
   // superAdminMiddleware,
   async (req, res) => {
     try {

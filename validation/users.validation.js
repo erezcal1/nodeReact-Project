@@ -25,6 +25,9 @@ const lastNameRole = {
 const phoneRole = {
   phone: Joi.string().min(3).max(255).trim(),
 };
+const sellerRole = {
+  isSeller: Joi.boolean(),
+};
 
 const signUpSchema = Joi.object({
   ...emailRole,
@@ -32,10 +35,12 @@ const signUpSchema = Joi.object({
   ...firstNameRole,
   ...lastNameRole,
   ...phoneRole,
+  ...sellerRole,
 });
 const signInSchema = Joi.object({
   ...emailRole,
   ...passwordRole,
+  ...sellerRole,
 });
 const forgetPassSchema = Joi.object({
   ...emailRole,

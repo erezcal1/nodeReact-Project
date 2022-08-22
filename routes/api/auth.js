@@ -1,3 +1,4 @@
+const logger = require("../../config/winstone");
 const express = require("express");
 const router = express.Router();
 const usersModule = require("../../models/users.model");
@@ -26,6 +27,22 @@ router.post("/signup", async (req, res) => {
       hashedPassword,
       validatedValue.phone
     );
+    const secretKey = generateRandomAlphaNumStr(8);
+    const encryptedData = crypto.encrypt(validatedValue.email);
+    const urlSecretKey = `http://localhost:3000/emailVerification/${secretKey}/${encryptedData.iv}/${encryptedData.encryptedData}`;
+    const expDate = new Date(Date.now() + 1210000000);
+
+    await usersModule.updateEmail(validatedValue.email, secretKey, expDate);
+    sendEmail({
+      from: process.env.EMAIL_EMAIL,
+      to: process.env.EMAIL_EMAIL,
+      subject: "your recovery email",
+      html: `
+        <h1>verification Email</h1>
+        <a href="${urlSecretKey}">verification email</a>
+      `,
+    });
+
     res.json(new CustomRes(CustomRes.STATUSES.ok, "User Created"));
   } catch (e) {
     console.log("error", e);
@@ -42,6 +59,11 @@ router.post("/signIn", async (req, res) => {
         CustomRes.STATUSES.failed,
         "Invalid Email or Password"
       );
+    if (!usersData.emailVerification.didHeDoIt)
+      throw new CustomRes(
+        CustomRes.STATUSES.failed,
+        "need to do an email verification"
+      );
     const hashResult = await bcrypt.compareHash(
       validateLogIn.password,
       usersData[0].password
@@ -57,6 +79,48 @@ router.post("/signIn", async (req, res) => {
     console.log(e);
   }
 });
+
+router.post(
+  "/emailVerification/:secretKey/:iv/:encryptedData",
+  async (req, res) => {
+    try {
+      const validatedRecoverPassword = await usersValidation.validateRecoveryPasswordSchema(
+        req.body
+      );
+      const decryptedEmail = crypto.decrypt({
+        iv: req.params.iv,
+        encryptedData: req.params.encryptedData,
+      });
+      const validateEmail = await usersValidation.validateRecoveryPassEmailCheckSchema(
+        { email: decryptedEmail }
+      );
+      const usersData = await usersModule.selectUserByEmail(
+        validateEmail.email
+      );
+      if (usersData.length <= 0)
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+
+      if (usersData[0].emailVerification.websiteKey !== req.params.secretKey) {
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+      }
+      const dateNow = new Date();
+      if (
+        dateNow.getTime() > usersData[0].emailVerification.emailDate.getTime()
+      )
+        throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+
+      const hashedPassword = await bcrypt.createHash(
+        validatedRecoverPassword.password
+      );
+      await usersModule.updateHeDidIt(validateEmail.email, true);
+      res.json(new CustomRes(CustomRes.STATUSES.ok, "Password Changed"));
+      // TODO: check secretKey expDate, encrypt Email and decrypt email
+    } catch (err) {
+      res.json(err);
+    }
+  }
+);
+
 router.post("/forgetPassword", async (req, res) => {
   try {
     console.log("hello");
@@ -66,8 +130,10 @@ router.post("/forgetPassword", async (req, res) => {
     const usersData = await usersModule.selectUserByEmail(
       validateForgetPassword.email
     );
-    if (usersData.length <= 0)
+    if (usersData.length <= 0) {
+      logger.error(`cant find email ${validateForgetPassword} `);
       throw new CustomRes(CustomRes.STATUSES.ok, "Email sent");
+    }
     const secretKey = generateRandomAlphaNumStr(8);
     const encryptedData = crypto.encrypt(validateForgetPassword.email);
     const urlSecretKey = `http://localhost:3000/recover-password/${secretKey}/${encryptedData.iv}/${encryptedData.encryptedData}`;
@@ -88,6 +154,7 @@ router.post("/forgetPassword", async (req, res) => {
         <a href="${urlSecretKey}">Recovery Link</a>
       `,
     });
+    logger.info(`mail sent to: ${validateForgetPassword.email}`);
     res.json(new CustomRes(CustomRes.STATUSES.ok, "Email sent"));
   } catch (e) {
     console.log(e);
@@ -114,15 +181,24 @@ router.post(
       const usersData = await usersModule.selectUserByEmail(
         validateEmail.email
       );
-      if (usersData.length <= 0)
+      if (usersData.length <= 0) {
+        logger.error(`email not exist ${validatedRecoverPassword.email}`);
         throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+      }
 
       if (usersData[0].recovery.secretKey !== req.params.secretKey) {
+        logger.error(
+          `user with email ${validatedRecoverPassword.email} provided wrong key ${req.params.secretKey}`
+        );
         throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
       }
       const dateNow = new Date();
-      if (dateNow.getTime() > usersData[0].recovery.dateRecovery.getTime())
+      if (dateNow.getTime() > usersData[0].recovery.dateRecovery.getTime()) {
+        logger.error(
+          `recovery key of email ${validatedRecoverPassword.email} expired`
+        );
         throw new CustomRes(CustomRes.STATUSES.failed, "Something went wrong");
+      }
 
       const hashedPassword = await bcrypt.createHash(
         validatedRecoverPassword.password
